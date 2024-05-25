@@ -11,9 +11,18 @@ void Graph::loadGraph(int* matrix) {
 }
 
 void Graph::printGraph() {
-  for(int i = 0; i < adjMatrix.size(); i++) {
-    for(int j = 0; j < adjMatrix.size(); j++) {
-      cout << adjMatrix[i][j] << endl;
+  int countEdges = 0;
+  
+  for(int i = 0; i < g.adjMatrix.size(); i++) 
+  {
+    for(int j = 0; j < g.adjMatrix.size(); j++) 
+    {
+      if(g.adjMatrix[i][j] != 0)
+        countEdges++;
     }
   }
+
+  cout << "the number of vertices is " << g.adjMatrix.size() << endl;
+  cout << "the number of edges is " << countEdges << endl;
+
 }
