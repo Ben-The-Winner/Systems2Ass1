@@ -1,28 +1,22 @@
-#include <iostream>
-using namespace std;
 #include "Graph.hpp"
+#include <vector>
+#include <stack>
 
-void Graph::loadGraph(int* matrix) {
-  adjMatrix = new int[matrix.size()][matrix.size()];
-  for (int i = 0; i < matrix.size(); ++i) {
-    for (int j = 0; j < matrix.size(); ++j) {
-        adjMatrix[i][j] = matrix[i][j];
-  }
+void Graph::loadGraph(const vector<vector<int>>& matrix) { // Updated parameter type
+    adjMatrix = matrix;
 }
 
 void Graph::printGraph() {
-  int countEdges = 0;
-  
-  for(int i = 0; i < g.adjMatrix.size(); i++) 
-  {
-    for(int j = 0; j < g.adjMatrix.size(); j++) 
-    {
-      if(g.adjMatrix[i][j] != 0)
-        countEdges++;
+    int countEdges = 0;
+
+    for (int i = 0; i < adjMatrix.size(); i++) { // Use size_t for comparison
+        for (int j = 0; j < adjMatrix.size(); j++) { // Use size_t for comparison
+            if (adjMatrix[i][j] != 0)
+                countEdges++;
+        }
     }
-  }
 
-  cout << "the number of vertices is " << g.adjMatrix.size() << endl;
-  cout << "the number of edges is " << countEdges << endl;
-
+    cout << "The number of vertices is " << adjMatrix.size() << endl;
+    cout << "The number of edges is " << countEdges/2 << endl;//because the matrix is symmetrical
 }
+
