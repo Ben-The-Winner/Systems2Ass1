@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <queue>
+#include <stack>
 #include <algorithm>
 #include <limits>
 #define INF numeric_limits<int>::max()
@@ -9,10 +10,9 @@ using namespace std;
 
 bool isConnected(Graph g) {
     vector<bool> visited(g.adjMatrix.size(), false); 
-    vector<int> adj;
     stack<int> stack;
 
-    int start = 0;//the first node in the graph
+    int start = 0; // the first node in the graph
     visited[start] = true; 
     stack.push(start); 
 
@@ -20,39 +20,35 @@ bool isConnected(Graph g) {
         int v = stack.top(); 
         stack.pop(); 
 
-        for(int i = 0; i< g.adjMatrix.size(); i++)
-        {
-            if(g.adjMatrix[v][i] != 0)
-                adj.push_back(i);
-        }
-        for (int u : adj[v]) {
-            if (!visited[u]) {
-                visited[u] = true; // Mark the adjacent vertex as visited
-                stack.push(u); // Push it onto the stack
+        for(int i = 0; i < g.adjMatrix.size(); i++) {
+            if(g.adjMatrix[v][i] != 0 && !visited[i]) {
+                visited[i] = true; // Mark the adjacent vertex as visited
+                stack.push(i); // Push it onto the stack
             }
         }
     }
 
-    if(visited[g.adjMatrix.size() - 1] == false)//the algorithm haven't gone over all the vertices
-        return false;
-    else
-        return true;
-
-};
-
+    // Check if all vertices were visited
+    for (bool wasVisited : visited) {
+        if (!wasVisited) {
+            return false;
+        }
+    }
+    return true;
+}
 
 
 vector<int> shortestPath(Graph g, int start, int end) {
-    int u, whole_size = g.adjMatrix.size() * g.adjMatrix.size();
-    vector<int> dist(whole_size, INF);
-    vector<int> pred(whole_size, -1);  
-    vector<bool> visited(whole_size, false);
+    int u;
+    vector<int> dist(g.adjMatrix.size(), INF);
+    vector<int> pred(g.adjMatrix.size(), -1);  
+    vector<bool> visited(g.adjMatrix.size(), false);
 
     dist[start] = 0;
 
-    for (int i = 0; i < whole_size - 1; ++i) {
+    for (int i = 0; i < g.adjMatrix.size() - 1; ++i) {
         u = -1;
-        for (int j = 0; j < whole_size; ++j) {
+        for (int j = 0; j < g.adjMatrix.size(); ++j) {
             if (!visited[j] && (u == -1 || dist[j] < dist[u])) {
                 u = j;
             }
@@ -63,10 +59,11 @@ vector<int> shortestPath(Graph g, int start, int end) {
         }
 
         visited[u] = true;
-        for (int v = 0; v < size; ++v) {
+        for (int v = 0; v < g.adjMatrix.size(); ++v) {
             if (!visited[v] && g.adjMatrix[u][v] && dist[u] != INF && dist[u] + g.adjMatrix[u][v] < dist[v]) {
                 dist[v] = dist[u] + g.adjMatrix[u][v];
                 pred[v] = u;  
+            }
         }
     }
 
@@ -74,55 +71,61 @@ vector<int> shortestPath(Graph g, int start, int end) {
     for (int node = end; node != -1; node = pred[node]) {
         path.push_back(node);
     }
-    if(path.empty)
-    {
-        return -1;
+    if (path.empty()) {
+        return {-1};
     }
     reverse(path.begin(), path.end());  
 
-    for(int i = 0; i< path.size() - 1; i++)
+    for (int i = 0; i < path.size() - 1; i++)
         cout << path[i] << " -> ";
     
     cout << path[path.size() - 1] << endl;
     return path;
-  }
-
 }
 
-vector<int> isContainsCycle(Graph g) {
-    int whole_size = g.adjMatrix.size() * g.adjMatrix.size();
-    vector<bool> visited(whole_size, false);
-    queue<int> q; 
-    vector<int> paths(whole_size);
-    for (int startVertex = 0; startVertex < g.adjMatrix.size(); ++startVertex) {
-        if (!visited[startVertex]) {
-            visited[startVertex] = true;
-            q.push(startVertex);
-            paths[startVertex].push_back(startVertex);
 
-            while (!q.empty()) {
-                int vertex = q.front();
-                q.pop();
+bool dfs(Graph g, vector<bool> visited, int current, vector<int> parent, vector<int> cycle) {
+    visited[current] = true;
 
-                for (int v = 0; v < g.adjMatrix.size(); ++v) {
-                    if (g.adjMatrix[vertex][v] && !visited[v]) {
-                        visited[v] = true;
-                        q.push(v);
-                        paths[v] = paths[vertex]; 
-                        paths[v].push_back(v); 
-                    } else if (visited[v] && find(paths[vertex].begin(), paths[vertex].end(), v) != paths[vertex].end()) {
-                        vector<int> cycle(paths[vertex].begin() + distance(paths[vertex].begin(), find(paths[vertex].begin(), paths[vertex].end(), v)), paths[vertex].end());
-                        cout << "the cycle is " << cycle;
-                        return cycle;
-                    }
+    for (size_t neighbor = 0; neighbor < g.adjMatrix.size(); ++neighbor) {
+        if (g.adjMatrix[current][neighbor]) {
+            if (!visited[neighbor]) {
+                parent[neighbor] = current;
+                if (dfs(g, visited, neighbor, parent, cycle))
+                    return true;
+            } else if (parent[current] != neighbor) {
+                // Cycle detected
+                cycle.push_back(neighbor);
+                int temp = current;
+                while (temp != neighbor) {
+                    cycle.push_back(temp);
+                    temp = parent[temp];
                 }
+                cycle.push_back(neighbor);
+                return true;
             }
         }
     }
-    cout << "0 (false)" << endl;
-    return {0}; 
 
+    return false;
 }
+
+vector<int> isContainsCycle(Graph g) {
+    vector<bool> visited(g.adjMatrix.size(), false);
+    vector<int> parent(g.adjMatrix.size(), -1);
+    vector<int> cycle;
+
+    for (int startVertex = 0; startVertex < g.adjMatrix.size(); ++startVertex) {
+        if (!visited[startVertex]) {
+            if (dfs(g, visited, startVertex, parent, cycle)) {
+                return cycle; // Return the cycle if found
+            }
+        }
+    }
+
+    return vector<int>(); // Return an empty vector if no cycle is found
+}
+
 
 vector<int> isBipartite(Graph g) {
     int size = g.adjMatrix.size();
@@ -171,7 +174,7 @@ vector<int> isBipartite(Graph g) {
 
 
     for (int vertex : bipartition2) {
-        cout << vertex << ", "
+        cout << vertex << ", ";
         result.push_back(vertex);
     }
     cout << "}." << endl;
@@ -221,6 +224,7 @@ vector<int> negativeCycle(Graph g) {
     cout << "there are no negative cycles here" << endl;
     return {0};
 }
+
 
 
 
