@@ -2,13 +2,16 @@
 #define GRAPH_H
 
 #include <iostream>
+#include <vector>
+#include <stack>
+
 using namespace std;
 
 class Graph {
 public:
     vector<vector<int>> adjMatrix;
-public:
-    void loadGraph(vector<vector<int>>);
+
+    void loadGraph(const vector<vector<int>>& matrix); // Updated parameter type
     void printGraph();
 };
 
